@@ -15,7 +15,6 @@ local function put_sig_in_buf(buffer, params)
 		end
 
 		local lines = vim.lsp.util.convert_signature_help_to_markdown_lines(result)
-		print(vim.inspect(lines))
 		if not lines then return end
 		vim.api.nvim_buf_set_lines(buffer, 0, -1, false, lines)
 	end
