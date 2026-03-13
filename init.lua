@@ -2,6 +2,8 @@ local M = {}
 
 M.start = function ()
 	local ok = false
+	local WIDTH = 60
+	local HEIGHT = vim.api.nvim_win_get_height(0)
 
 	-- Buffer with no files and doesnt close
 	local buffer = vim.api.nvim_create_buf(false, true)
@@ -10,7 +12,18 @@ M.start = function ()
 	vim.bo[buffer].buftype = "nofile"
 	vim.bo[buffer].swapfile = false
 	vim.bo[buffer].filetype = "markdown"
+	vim.bo[buffer].syntax = "markdown"
 	vim.bo[buffer].modifiable = false
+
+	--- Cleans up the text in markdown format and sets the lines to the buffer
+	local function cleanup_and_set_lines(lines, buffer)
+		if not lines then return end
+		vim.bo[buffer].modifiable = true
+		lines = vim.lsp.util.stylize_markdown(buffer, lines, {height = HEIGHT, width = WIDTH})
+		lines = vim.lsp.util._normalize_markdown(lines)
+		vim.api.nvim_buf_set_lines(buffer, 0, -1, false, lines)
+		vim.bo[buffer].modifiable = false
+	end
 
 	--- Gets the signature and puts it in a buffer
 	--- @param buffer integer
@@ -22,10 +35,7 @@ M.start = function ()
 			end
 
 			local lines = vim.lsp.util.convert_signature_help_to_markdown_lines(result)
-			if not lines then return end
-			vim.bo[buffer].modifiable = true
-			vim.api.nvim_buf_set_lines(buffer, 0, -1, false, lines)
-			vim.bo[buffer].modifiable = false
+			cleanup_and_set_lines(lines, buffer)
 		end
 		)
 	end
@@ -40,10 +50,7 @@ M.start = function ()
 			end
 
 			local lines = vim.lsp.util.convert_input_to_markdown_lines(result.contents)
-			if not lines then return end
-			vim.bo[buffer].modifiable = true
-			vim.api.nvim_buf_set_lines(buffer, 0, -1, false, lines)
-			vim.bo[buffer].modifiable = false
+			cleanup_and_set_lines(lines, buffer)
 		end
 		)
 	end
@@ -56,9 +63,13 @@ M.start = function ()
 			win = vim.api.nvim_open_win(buffer, false, {
 				split = 'left',
 				win = 0,
-				width = 60,
+				width = WIDTH,
 				style = "minimal",
 			})
+			vim.wo[win].wrap = true
+			vim.wo[win].breakindent = true
+			vim.wo[win].conceallevel = 2
+			vim.wo[win].concealcursor = "n"
 		end
 	end
 
