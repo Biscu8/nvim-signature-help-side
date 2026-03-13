@@ -1,7 +1,8 @@
 local M = {}
 
 M.start = function ()
-	local ok = false
+	local start = false
+	local enabled = true
 	local WIDTH = 60
 	local HEIGHT = vim.api.nvim_win_get_height(0)
 
@@ -59,7 +60,7 @@ M.start = function ()
 	local function open_close_window()
 		if vim.api.nvim_win_is_valid(win) then
 			vim.api.nvim_win_close(win, false)
-		else
+		elseif enabled then
 			win = vim.api.nvim_open_win(buffer, false, {
 				split = 'left',
 				win = 0,
@@ -75,10 +76,11 @@ M.start = function ()
 
 	--- Change the text of the lsp buffer
 	local function change_text(ev)
-		if not ok then
-			ok = true
+		if not start then
+			start = true
 			return
 		end
+		if not enabled then return end
 		local params = vim.lsp.util.make_position_params(0, 'utf-8')
 		if ev.event == 'CursorHold'
 			or ev.event == 'CursorHoldI'
@@ -92,12 +94,32 @@ M.start = function ()
 
 	vim.keymap.set("n", "]", open_close_window)
 	vim.keymap.set("n", "[", function ()
-			local params = vim.lsp.util.make_position_params(0, 'utf-8')
-			put_hover_in_buf(buffer, params)
+			if enabled then
+				local params = vim.lsp.util.make_position_params(0, 'utf-8')
+				put_hover_in_buf(buffer, params)
+			end
 		end,
 		{noremap = true}
 	)
 
 	vim.api.nvim_create_autocmd({'CursorHoldI', 'CursorHold', 'InsertLeave', 'CursorMovedI', 'BufEnter'}, {callback = change_text})
+	vim.api.nvim_create_user_command(
+		"DisableLsp",
+		function ()
+			enabled = false
+			if vim.api.nvim_win_is_valid(win) then
+				vim.api.nvim_win_close(win, true)
+			end
+		end,
+		{}
+	)
+	vim.api.nvim_create_user_command(
+		"EnableLsp",
+		function ()
+			enabled = true
+			open_close_window()
+		end,
+		{}
+	)
 end
 return M
