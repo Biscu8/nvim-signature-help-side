@@ -1,6 +1,8 @@
 local M = {}
 
 M.start = function ()
+	local ok = false
+
 	-- Buffer with no files and doesnt close
 	local buffer = vim.api.nvim_create_buf(false, true)
 	local win = -1
@@ -62,6 +64,9 @@ M.start = function ()
 
 	--- Change the text of the lsp buffer
 	local function change_text(ev)
+		if not ok then
+			return
+		end
 		local params = vim.lsp.util.make_position_params()
 		if ev.event == 'CursorHold'
 			or ev.event == 'CursorHoldI'
