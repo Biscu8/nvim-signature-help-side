@@ -65,9 +65,10 @@ M.start = function ()
 	--- Change the text of the lsp buffer
 	local function change_text(ev)
 		if not ok then
+			ok = true
 			return
 		end
-		local params = vim.lsp.util.make_position_params()
+		local params = vim.lsp.util.make_position_params(0, 'utf-8')
 		if ev.event == 'CursorHold'
 			or ev.event == 'CursorHoldI'
 			or ev.event == 'InsertLeave'
@@ -80,7 +81,7 @@ M.start = function ()
 
 	vim.keymap.set("n", "]", open_close_window)
 	vim.keymap.set("n", "[", function ()
-			local params = vim.lsp.util.make_position_params()
+			local params = vim.lsp.util.make_position_params(0, 'utf-8')
 			put_hover_in_buf(buffer, params)
 		end,
 		{noremap = true}
